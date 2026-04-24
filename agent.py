@@ -2,7 +2,7 @@ import os
 import json
 from tavily import TavilyClient
 import google.generativeai as genai
-from google.genai import types
+
 
 class RecommendationAgent:
     def __init__(self, gemini_api_key: str, tavily_api_key: str):
