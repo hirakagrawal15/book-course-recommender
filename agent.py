@@ -8,7 +8,7 @@ class RecommendationAgent:
         genai.configure(api_key=gemini_api_key)
 
         # FINAL FIX (important)
-        self.model = genai.GenerativeModel("models/gemini-pro")
+        self.model = genai.GenerativeModel("gemini-1.5-flash")
 
         self.tavily_client = TavilyClient(api_key=tavily_api_key)
 
