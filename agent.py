@@ -1,7 +1,7 @@
 import os
 import json
 from tavily import TavilyClient
-from google import genai
+import google.generativeai as genai
 from google.genai import types
 
 class RecommendationAgent:
