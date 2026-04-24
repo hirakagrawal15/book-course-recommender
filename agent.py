@@ -12,7 +12,7 @@ class RecommendationAgent:
             raise ValueError("API keys missing. Check Streamlit Secrets.")
 
         genai.configure(api_key=self.gemini_key)
-        self.model = genai.GenerativeModel("gemini-pro")
+        self.model = genai.GenerativeModel("gemini-1.5-flash")
 
         self.client = TavilyClient(api_key=self.tavily_key)
 
