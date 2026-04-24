@@ -10,7 +10,7 @@ class Evaluator:
             raise ValueError("Missing GEMINI_API_KEY")
 
         genai.configure(api_key=self.gemini_key)
-        self.model = genai.GenerativeModel("gemini-pro")
+        self.model = genai.GenerativeModel("gemini-1.5-flash")
 
     def evaluate(self, topic, recommendations):
         try:
