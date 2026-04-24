@@ -1,18 +1,14 @@
 import json
 from tavily import TavilyClient
-import google.generativeai as genai
+from google import genai
 
 
 class RecommendationAgent:
     def __init__(self, gemini_api_key: str, tavily_api_key: str):
-        genai.configure(api_key=gemini_api_key)
-
-        # FINAL FIX (important)
-        self.model = genai.GenerativeModel("gemini-1.5-flash")
-
+        self.client = genai.Client(api_key=gemini_api_key)
         self.tavily_client = TavilyClient(api_key=tavily_api_key)
 
-    def generate_search_queries(self, user_inputs: dict) -> list[str]:
+    def generate_search_queries(self, user_inputs: dict):
         prompt = f"""
         User wants to learn:
         Topic: {user_inputs.get('skill')}
@@ -20,13 +16,19 @@ class RecommendationAgent:
         Format: {user_inputs.get('format')}
         Duration: {user_inputs.get('duration')}
 
-        Generate 2 search queries in JSON list.
+        Generate 2 short search queries in JSON list format.
+        Example: ["best python books beginner", "top python courses online"]
         """
 
         try:
-            response = self.model.generate_content(prompt)
+            response = self.client.models.generate_content(
+                model="gemini-1.5-flash",
+                contents=prompt
+            )
+
             text = response.text.strip()
 
+            # Clean markdown
             if text.startswith("```"):
                 text = text.replace("```json", "").replace("```", "").strip()
 
@@ -36,7 +38,7 @@ class RecommendationAgent:
         except:
             return [f"{user_inputs.get('skill')} {user_inputs.get('level')} {user_inputs.get('format')}"]
 
-    def perform_search(self, queries: list[str]) -> str:
+    def perform_search(self, queries):
         results = []
 
         for q in queries:
@@ -48,7 +50,7 @@ class RecommendationAgent:
 
         return "\n\n".join(results)
 
-    def synthesize_recommendations(self, user_inputs: dict, search_context: str) -> str:
+    def synthesize_recommendations(self, user_inputs, search_context):
         prompt = f"""
         User Profile:
         {user_inputs}
@@ -56,19 +58,24 @@ class RecommendationAgent:
         Search Data:
         {search_context}
 
-        Recommend top 3 books/courses with:
+        Recommend top 3 books or courses.
+        Include:
         - Title
         - Platform
         - Reason
         - Link
 
-        Format nicely.
+        Format nicely in markdown.
         """
 
-        response = self.model.generate_content(prompt)
+        response = self.client.models.generate_content(
+            model="gemini-1.5-flash",
+            contents=prompt
+        )
+
         return response.text
 
-    def run(self, user_inputs: dict) -> dict:
+    def run(self, user_inputs):
         queries = self.generate_search_queries(user_inputs)
         search_data = self.perform_search(queries)
         final_output = self.synthesize_recommendations(user_inputs, search_data)
