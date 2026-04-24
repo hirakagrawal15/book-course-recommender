@@ -1,47 +1,56 @@
-import json
+import os
 from tavily import TavilyClient
+import google.generativeai as genai
 
 
 class RecommendationAgent:
-    def __init__(self, gemini_api_key: str, tavily_api_key: str):
-        self.tavily_client = TavilyClient(api_key=tavily_api_key)
+    def __init__(self):
+        self.gemini_key = os.getenv("GEMINI_API_KEY")
+        self.tavily_key = os.getenv("TAVILY_API_KEY")
 
-    def generate_search_queries(self, user_inputs):
-        return [
-            f"{user_inputs.get('skill')} beginner course",
-            f"best books for {user_inputs.get('skill')}"
-        ]
+        if not self.gemini_key or not self.tavily_key:
+            raise ValueError("API keys missing. Check Streamlit Secrets.")
 
-    def perform_search(self, queries):
-        results = []
+        genai.configure(api_key=self.gemini_key)
+        self.model = genai.GenerativeModel("gemini-pro")
 
-        for q in queries:
-            try:
-                res = self.tavily_client.search(query=q, max_results=3)
-                results.append(f"{q}:\n{json.dumps(res.get('results', []), indent=2)}")
-            except Exception as e:
-                results.append(f"Error: {str(e)}")
+        self.client = TavilyClient(api_key=self.tavily_key)
 
-        return "\n\n".join(results)
+    def get_recommendations(self, topic, level, format_type, time_commitment):
+        try:
+            query = f"{topic} {level} best {format_type} {time_commitment}"
 
-    def synthesize_recommendations(self, user_inputs, search_context):
-        return f"""
-        📚 Recommended Resources for {user_inputs.get('skill')}:
+            # 🔍 Tavily Search
+            response = self.client.search(query=query)
 
-        Based on latest search:
+            results = response.get("results", [])
+            search_context = " ".join([r.get("content", "") for r in results])
 
-        {search_context}
+            if not search_context:
+                search_context = "No useful search data found."
 
-        ✔ These are relevant books and courses.
-        ✔ You can explore links above.
-        """
+            # 🤖 Gemini Prompt
+            prompt = f"""
+            Based on the following search data, recommend the best {format_type} for learning {topic}.
 
-    def run(self, user_inputs):
-        queries = self.generate_search_queries(user_inputs)
-        search_data = self.perform_search(queries)
-        final_output = self.synthesize_recommendations(user_inputs, search_data)
+            User Level: {level}
+            Time Commitment: {time_commitment}
 
-        return {
-            "queries": queries,
-            "recommendation": final_output
-        }
+            Search Data:
+            {search_context}
+
+            Give clear, structured recommendations with names and short descriptions.
+            """
+
+            gemini_response = self.model.generate_content(prompt)
+
+            return {
+                "recommendations": gemini_response.text,
+                "search_context": search_context
+            }
+
+        except Exception as e:
+            return {
+                "recommendations": f"Error: {str(e)}",
+                "search_context": ""
+            }
