@@ -6,7 +6,7 @@ class LLMJudge:
     def __init__(self, gemini_api_key: str):
         # Correct setup
         genai.configure(api_key=gemini_api_key)
-        self.model = genai.GenerativeModel("gemini-1.5-flash")
+        self.model = genai.GenerativeModel("gemini-pro")
 
     def evaluate(self, recommendation_text: str, user_inputs: dict) -> dict:
         prompt = f"""
