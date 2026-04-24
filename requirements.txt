@@ -1,3 +1,5 @@
 streamlit
 tavily-python
+google-generativeai
 python-dotenv
+
