@@ -1,37 +1,33 @@
-import json
-class LLMJudge:
-    def __init__(self, gemini_api_key: str):
-        # Gemini not used in this safe version
-        pass
+import os
+import google.generativeai as genai
 
-    def evaluate(self, recommendation_text: str, user_inputs: dict):
-        """
-        Simple evaluation logic (no API dependency)
-        """
 
-        score = 0
-        feedback = []
-        
-        # Basic checks
-        if user_inputs.get("skill") and user_inputs["skill"].lower() in recommendation_text.lower():
-            score += 3
-            feedback.append("Relevant to the user's topic.")
-        
-        if "http" in recommendation_text:
-            score += 3
-            feedback.append("Contains useful links/resources.")
-        
-        if len(recommendation_text) > 100:
-            score += 2
-            feedback.append("Detailed explanation provided.")
-        
-        # Formatting check
-        if "\n" in recommendation_text:
-            score += 2
-            feedback.append("Well formatted output.")
+class Evaluator:
+    def __init__(self):
+        self.gemini_key = os.getenv("GEMINI_API_KEY")
 
-        return {
-            "score": score,
-            "feedback": " ".join(feedback) if feedback else "Basic recommendations provided.",
-            "improvement": "Add more personalization and structured formatting."
-        }
+        if not self.gemini_key:
+            raise ValueError("Missing GEMINI_API_KEY")
+
+        genai.configure(api_key=self.gemini_key)
+        self.model = genai.GenerativeModel("gemini-pro")
+
+    def evaluate(self, topic, recommendations):
+        try:
+            prompt = f"""
+            Evaluate the following recommendations for the topic: {topic}
+
+            Recommendations:
+            {recommendations}
+
+            Give:
+            1. Feedback
+            2. Improvement Areas
+            """
+
+            response = self.model.generate_content(prompt)
+
+            return response.text
+
+        except Exception as e:
+            return f"Evaluation Error: {str(e)}"
