@@ -4,9 +4,10 @@ import google.generativeai as genai
 
 class LLMJudge:
     def __init__(self, gemini_api_key: str):
-        # Correct setup
         genai.configure(api_key=gemini_api_key)
-        self.model = genai.GenerativeModel("gemini-pro")
+
+        # FINAL FIX (with models/ prefix)
+        self.model = genai.GenerativeModel("models/gemini-pro")
 
     def evaluate(self, recommendation_text: str, user_inputs: dict) -> dict:
         prompt = f"""
