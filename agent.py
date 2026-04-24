@@ -5,11 +5,11 @@ import google.generativeai as genai
 
 class RecommendationAgent:
     def __init__(self, gemini_api_key: str, tavily_api_key: str):
-        # Configure Gemini
         genai.configure(api_key=gemini_api_key)
-        self.model = genai.GenerativeModel("gemini-pro")
 
-        # Tavily client
+        # FINAL FIX (important)
+        self.model = genai.GenerativeModel("models/gemini-pro")
+
         self.tavily_client = TavilyClient(api_key=tavily_api_key)
 
     def generate_search_queries(self, user_inputs: dict) -> list[str]:
@@ -27,7 +27,6 @@ class RecommendationAgent:
             response = self.model.generate_content(prompt)
             text = response.text.strip()
 
-            # Clean markdown if present
             if text.startswith("```"):
                 text = text.replace("```json", "").replace("```", "").strip()
 
