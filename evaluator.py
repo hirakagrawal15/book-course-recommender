@@ -1,7 +1,6 @@
 import os
 import json
-from google import genai
-from google.genai import types
+import google.generativeai as genai
 
 class LLMJudge:
     def __init__(self, gemini_api_key: str):
