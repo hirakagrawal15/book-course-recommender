@@ -1,7 +1,6 @@
 import os
 from tavily import TavilyClient
-import google.generativeai as genai
-
+from google import genai
 
 class RecommendationAgent:
     def __init__(self):
@@ -9,48 +8,49 @@ class RecommendationAgent:
         self.tavily_key = os.getenv("TAVILY_API_KEY")
 
         if not self.gemini_key or not self.tavily_key:
-            raise ValueError("API keys missing. Check Streamlit Secrets.")
+            raise ValueError("API keys missing")
 
-        genai.configure(api_key=self.gemini_key)
-        self.model = genai.GenerativeModel("models/gemini-1.5-flash")
-
-        self.client = TavilyClient(api_key=self.tavily_key)
+        self.gemini = genai.Client(api_key=self.gemini_key)
+        self.tavily = TavilyClient(api_key=self.tavily_key)
 
     def get_recommendations(self, topic, level, format_type, time_commitment):
         try:
-            query = f"{topic} {level} best {format_type} {time_commitment}"
+            query = f"{topic} {level} best {format_type}"
 
-            # 🔍 Tavily Search
-            response = self.client.search(query=query)
+            search = self.tavily.search(query=query)
+            results = search.get("results", [])
 
-            results = response.get("results", [])
-            search_context = " ".join([r.get("content", "") for r in results])
+            search_context = " ".join(
+                [r.get("content", "") for r in results]
+            )
 
             if not search_context:
-                search_context = "No useful search data found."
+                search_context = "Basic knowledge resources for learning."
 
-            # 🤖 Gemini Prompt
             prompt = f"""
-            Based on the following search data, recommend the best {format_type} for learning {topic}.
+            Recommend best {format_type} for {topic}
 
-            User Level: {level}
-            Time Commitment: {time_commitment}
+            Level: {level}
+            Time: {time_commitment}
 
-            Search Data:
+            Data:
             {search_context}
 
-            Give clear, structured recommendations with names and short descriptions.
+            Give 5 structured recommendations.
             """
 
-            gemini_response = self.model.generate_content(prompt)
+            response = self.gemini.models.generate_content(
+                model="gemini-1.5-flash",
+                contents=prompt
+            )
 
             return {
-                "recommendations": gemini_response.text,
+                "recommendations": response.text,
                 "search_context": search_context
             }
 
         except Exception as e:
             return {
-                "recommendations": f"Error: {str(e)}",
+                "recommendations": f"Error: {e}",
                 "search_context": ""
             }
