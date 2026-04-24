@@ -1,3 +1,0 @@
-streamlit
-tavily-python
-google-genai
