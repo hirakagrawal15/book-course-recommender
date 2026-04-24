@@ -60,7 +60,7 @@ if st.button("Generate Recommendations", type="primary"):
                 st.markdown("**Generated Search Queries:**")
                 st.write(results["queries"])
                 st.markdown("**Raw Search Data from Tavily:**")
-                st.text(results["search_context"][:2000] + "\n...[truncated]...")
+                st.text(results.get("search_context", "No search context available")[:2000] + "\n...[truncated]...")
                 
             st.markdown("---")
             st.subheader("🎯 Top Recommendations")
